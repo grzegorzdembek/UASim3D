@@ -1,1 +1,8 @@
-﻿  UASim3D.vcxproj -> C:\UASim3D\UASim3D\x64\Release\UASim3D.exe
+﻿LINK : warning LNK4098: domyślna biblioteka „LIBCMT” powoduje konflikt z innymi bibliotekami; użyj opcji /NODEFAULTLIB:biblioteka
+  Trwa generowanie kodu
+  0 of 4822 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Zakończono generowanie kodu
+glew32s.lib(glew.obj) : warning LNK4099: nie znaleziono pliku PDB „glew32s.pdb” z elementem „glew32s.lib(glew.obj)” lub w pozycji „C:\UASim3D\UASim3D\x64\Release\glew32s.pdb”; obiekt zostanie skonsolidowany bez informacji debugowania
+  UASim3D.vcxproj -> C:\UASim3D\UASim3D\x64\Release\UASim3D.exe
