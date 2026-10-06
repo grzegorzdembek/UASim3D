@@ -2,6 +2,7 @@
 /.vs/
 /[Dd]ebug/
 /[Rr]elease/
+UASim3D/x64/
 
 *.user
 *.suo
