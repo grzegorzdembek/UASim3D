@@ -1,0 +1,36 @@
+#pragma once
+// #include <glad/glad.h>
+
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <thread>
+#include <algorithm>
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <unordered_map>
+#include <fstream>
+#include <string>
+#include <iomanip>
+#include <sstream>
+#include <cctype>
+#include <memory>
+#include <filesystem>
+
+#define IMGUI_IMPL_GLFW_DISABLE_X11 1
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
+#include "UASimLib/RedCppLib/RedCppLib.hpp"
+
+using Red::_Assertion;
+
+#include "UASimLib/UASimLib.hpp"
+#include "constants.hpp"
+#include "globals.hpp"
+#include "render.hpp"

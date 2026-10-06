@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="UASim3D.vcxproj" Id="b3c425a1-ae37-4a33-ad85-a72f9dc7280c" />
+</Solution>
