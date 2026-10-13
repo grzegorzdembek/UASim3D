@@ -46,7 +46,6 @@ Create a new branch and give it a name related to what you will be working on:
 ```bash
 git checkout -b your-task-name
 ```
-*(e.g., `git checkout -b add-camera`)*
 
 ### 3. Saving changes (Commit)
 When you've written your code and want to save it in the history:
