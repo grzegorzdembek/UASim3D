@@ -1,55 +1,69 @@
 # UASim3D 
 
-## Wymagania
-* **System operacyjny:** Windows
-* **Środowisko:** Visual Studio z zainstalowanym pakietem "Desktop development with C++" (Programowanie aplikacji klasycznych w języku C++).
-* **Git:** Zainstalowany klient Git.
----
-## Pierwsze uruchomienie 
+## Requirements
 
-1. **Pobranie repozytorium (Clone):**
-   Otwórz terminal w folderze, w którym chcesz trzymać projekt i wpisz komendę:
+* **Operating System:** Windows
+* **Environment:** Visual Studio with the "Desktop development with C++" workload installed.
+* **Git:** Installed Git client.
+
+---
+
+## Getting Started (Step by step)
+
+1. **Cloning the repository (Clone):**
+   Open a terminal in the folder where you want to keep the project and type the following command:
    ```bash
-   git clone https://github.com/grzegorzdembek/UASim3D.git
+      git clone https://github.com/grzegorzdembek/UASim3D.git
+   ```
 
-2. **Otwarcie projektu:**
-   Wejdź do pobranego folderu i kliknij dwukrotnie plik `UASim3D.sln`. Projekt otworzy się w Visual Studio.
+2. **Opening the project:**
+   Navigate to the downloaded folder and double-click the `UASim3D.sln` file. 
 
-3. **Konfiguracja kompilacji:**
-   Na górnym pasku narzędzi w Visual Studio upewnij się, że masz wybrane następujące opcje:
-   * Tryb kompilacji: **`Release`**
-   * Platforma: **`x64`**
+3. **Build configuration:**   
+   On the top toolbar in Visual Studio, make sure you have the following options selected:
+   * Build configuration: **`Release`**
+   * Platform: **`x64`**
 
-4. **Kompilacja i uruchomienie:**
-   * Wciśnij skrót **Ctrl + Shift + B** (lub wybierz z górnego menu `Kompiluj -> Kompiluj rozwiązanie`), aby zbudować projekt. 
-   * Wciśnij **F5** (lub zielony przycisk "Lokalny debuger systemu Windows"), aby uruchomić aplikację.
+4. **Build and run:**
+   * Press **Ctrl + Shift + B** (or choose `Build -> Build Solution` from the top menu) to build the project. 
+   * Press **F5** (or the green "Local Windows Debugger" button) to run the application.
+
 ---
-## Jak pracować z Git 
-Aby uniknąć konfliktów w kodzie, **nie pracujemy bezpośrednio na gałęzi `main`**. Każdą nową funkcję dodajemy na osobnej, dedykowanej gałęzi.
-### 1. Rozpoczęcie pracy (Aktualizacja)
-Zanim zaczniesz pisać kod, upewnij się, że masz najnowszą wersję projektu:
+
+## Git Workflow 
+
+To avoid code conflicts, **we do not work directly on the `main` branch**. Every new feature or fix should be added on a separate, dedicated branch.
+
+### 1. Starting work (Update)
+Before you start writing code, make sure you have the latest version of the project:
 ```bash
 git checkout main
 git pull
 ```
-### 2. Utworzenie nowej gałęzi (Branch)
-Stwórz nową gałąź i nadaj jej nazwę nawiązującą do tego, co będziesz robić:
+
+### 2. Creating a new branch (Branch)
+Create a new branch and give it a name related to what you will be working on:
 ```bash
-git checkout -b nazwa-twojego-zadania
+git checkout -b your-task-name
 ```
-### 3. Zapisywanie zmian (Commit)
-Gdy napiszesz kod i chcesz go zapisać w historii:
+*(e.g., `git checkout -b add-camera`)*
+
+### 3. Saving changes (Commit)
+When you've written your code and want to save it in the history:
 ```bash
-# Dodanie wszystkich zmienionych plików do poczekalni:
+# Add all changed files to the staging area:
 git add .
-# Zapisanie zmian z krótkim opisem:
-git commit -m "Krótki opis, co zostało zrobione"
+
+# Save changes with a short description:
+git commit -m "Short, clear description of what was done"
 ```
-### 4. Wysłanie zmian na serwer (Push)
-Przy pierwszym wysyłaniu nowej gałęzi na GitHub użyj poniższej komendy (dzięki fladze `-u` powiążesz gałąź lokalną z tą na serwerze):
+
+### 4. Pushing changes to the server (Push)
+When pushing a new branch to GitHub for the first time, use the following command (the `-u` flag links your local branch to the one on the server):
 ```bash
-git push -u origin nazwa-twojego-zadania
+git push -u origin your-task-name
 ```
-*Przy kolejnych zmianach na tej samej gałęzi wystarczy samo `git push`.*
-### 5. Zakończenie pracy (Pull Request)
-Po wysłaniu zmian, wejdź na stronę repozytorium na GitHubie. Zobaczysz tam przycisk **"Compare & pull request"**. Kliknij go, aby zgłosić swój kod do sprawdzenia. 
+*For subsequent changes on the same branch, a simple `git push` is enough.*
+
+### 5. Finishing work (Pull Request)
+After pushing your changes, go to the repository page on GitHub. You will see a **"Compare & pull request"** button. Click it to submit your code for review. 
