@@ -8,7 +8,7 @@
 
 ---
 
-## Getting Started (Step by step)
+## Getting Started 
 
 1. **Cloning the repository (Clone):**
    Open a terminal in the folder where you want to keep the project and type the following command:
