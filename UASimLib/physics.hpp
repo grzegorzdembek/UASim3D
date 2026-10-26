@@ -1,6 +1,5 @@
 #pragma once
 
-
 // interpolacja liniowa  logMicHit na krok dt + kwantyzacja q5
 inline float flush_echo_interpolated(Microphone& Mic, shared_ptr<Wave> wave, const std::vector<std::pair<float, float>> &buf,
                                      float TS_native, bool quantize = true)
@@ -401,6 +400,14 @@ inline void updatePhysics(float dt, float window_ms, float time_passed, shared_p
             {
                 // dolna �ciana
                 energy *= 0.5f;
+
+                static int licznik_dna = 0;
+                if (licznik_dna < 5)
+                {
+                    printf("[DNO] t=%.6f s | node=%d | pos=(%.3f, %.3f, %.3f) | vel_po=(%.1f, %.1f, %.1f)\n",
+                        time_passed, i, p.x, p.y, p.z, v.x, v.y, v.z);
+                    licznik_dna++;
+                }
             }
         }
 
