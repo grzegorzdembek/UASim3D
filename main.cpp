@@ -1,29 +1,16 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "hmain.hpp"
 #define M_PI 3.1415
-
-// float dt = 0.00001f;
-
 using std::shared_ptr;
-
+// float dt = 0.00001f;
+//float T2 = 0;
 
 int test = 0;
-
-
-
-//float T2 = 0;
 
 std::vector<float> time_T2;
 std::vector<float> time_T2_prev;
 
 bool serio_first = true;
-
-
-
-
-
-
-
 
 // WAZNE DANE
 float time_passed = 0.0f;
@@ -64,10 +51,7 @@ double fps = 0.0;
 
 bool first = true;
 
-
-
 std::vector<float> winMean; // �rednie z okien X ms
-
 
 Cuboid_dimensions Cube
 {
@@ -80,7 +64,6 @@ Cuboid_dimensions Obstacle
     0.3f, 0.7f, 0.7f,   // width, height, depth
     500.0f, 1.0f, 50.0f // x/y/z offset
 };
-
 
 SoundSource source;
 Microphone Mic;
@@ -130,7 +113,6 @@ bool write_two_vectors_csv(const std::string &filepath,
     out.flush();
     return out.good();
 }
-
 
 // do separatora
 static inline char detect_sep(const std::string &line)
@@ -414,10 +396,6 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-
-
-
-
 void StepSimulation(shared_ptr<Wave> wave)
 {
     wave->pruneSlowNodes(getAtTime((current_wave->gWinIdx)*window_ms / 1000.0f), time_passed);
@@ -665,7 +643,7 @@ int main()
             }
 
             // buildSphereBuffers(/*dynamic=*/true);
-            buildBuffersFor(current_wave->nodes, current_wave->triangles, gWaveGL, /*dynamic=*/true);
+            // buildBuffersFor(current_wave->nodes, current_wave->triangles, gWaveGL, /*dynamic=*/true);
 
             // po zbudowaniu dwudziestoscianu
             
@@ -704,8 +682,8 @@ int main()
 
         
         clock_t render_start = clock();
-        if(simulate || time_passed > 0.0001f)
-            RenderWave(current_wave, cameraPos, gWaveGL, Cube);
+        //if(simulate || time_passed > 0.0001f)
+        //  RenderWave(current_wave, cameraPos, gWaveGL, Cube);
 
         RenderPool(cameraPos, Cube);
 
@@ -723,8 +701,6 @@ int main()
         clock_t render_tm = clock() - render_start;
         last_render_time = PushTime(render_tm, render_times, RENDER_TIMES_KEPT, render_times_index);
         total_render_time += last_render_time;
-
-
 
         glfwPollEvents();
 
