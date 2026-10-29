@@ -1,5 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "hmain.hpp"
+#include "CollisionObjects/CollisionHeightmap.hpp"
+
 #define M_PI 3.1415
 using std::shared_ptr;
 // float dt = 0.00001f;
@@ -580,6 +582,9 @@ int main()
 
     auto cb = make_shared<CollisionBox>(vec3f{-1, 0, 0}, vec3f{1, 1, 1}, vec3f{2.5, 1, 1});
     //current_wave->AddCollisionObject(cb);
+
+    CollisionHeightmap test_dno(41, 31, 0.5f, Cube.width, Cube.depth);
+    test_dno.printStats();
 
     while (!glfwWindowShouldClose(window))
     {

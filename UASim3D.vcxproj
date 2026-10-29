@@ -147,6 +147,7 @@ opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CollisionHeightmap.hpp" />
     <ClInclude Include="constants.hpp" />
     <ClInclude Include="globals.hpp" />
     <ClInclude Include="hmain.hpp" />
