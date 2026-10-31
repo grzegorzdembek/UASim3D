@@ -38,4 +38,5 @@ using Red::vec3i;
 #include "geometry.hpp"
 #include "wave.hpp"
 #include "microphone.hpp"
+#include "WaterTank.hpp"
 #include "physics.hpp"
