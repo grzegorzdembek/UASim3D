@@ -250,6 +250,57 @@ inline void RenderPool(glm::vec3 cameraPos, const Cuboid_dimensions& Cube )
     drawCuboidTransparentSorted(cameraPos, Cube);
 }
 
+inline void RenderTankBottom(const WaterTank& tank)
+{
+    // 1. Jezeli w GUI nie wybrano pofalowanego dna nic nie rysujemy
+    if (tank.bottomMode != WaterTank::BOTTOM_TEST || tank.bottomHeightmap == nullptr)
+        return;
+
+    // Pobieramy wskaznik do naszego obiektu pofalowanego dna
+    const auto& ch = tank.bottomHeightmap;
+
+    // 2. Wlaczamy test glebokosci 3D (zeby blizsze gorki zaslanialy dalsze)
+    glEnable(GL_DEPTH_TEST);
+
+    // 3. Przestawiamy OpenGL w tryb rysowania samych krawedzi (siatki / GL_LINE) zamiast pelnych scian
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    // Ustawiamy grubosc linii siatki na 1.5 piksela oraz czarny kolor (R=0, G=0, B=0)
+    glLineWidth(1.5f);
+    glColor3f(0.0f, 0.0f, 0.0f);
+
+    // 4. Rozpoczynamy rysowanie oczek siatki (kazde oczko to czworokat GL_QUADS z 4 punktow)
+    glBegin(GL_QUADS);
+    for (int z = 0; z < ch->numZ - 1; ++z)
+    {
+        for (int x = 0; x < ch->numX - 1; ++x)
+        {
+            // Przeliczamy numery kolumn (x, x+1) i wierszy (z, z+1) na metry w basenie:
+            float x0 = x * ch->cellSize - ch->offsetX;
+            float x1 = (x + 1) * ch->cellSize - ch->offsetX;
+            float z0 = z * ch->cellSize - ch->offsetZ;
+            float z1 = (z + 1) * ch->cellSize - ch->offsetZ;
+
+            // Odczytujemy wysokosci Y dla 4 naroznikow tego oczka z tablicy 1D:
+            float h00 = ch->heights[z * ch->numX + x];             // lewy-gorny
+            float h10 = ch->heights[z * ch->numX + (x + 1)];       // prawy-gorny
+            float h11 = ch->heights[(z + 1) * ch->numX + (x + 1)]; // prawy-dolny
+            float h01 = ch->heights[(z + 1) * ch->numX + x];       // lewy-dolny
+
+            // Podajemy 4 punkty 3D (x, y, z) tworzace jedno oczko siatki:
+            glVertex3f(x0, h00, z0);
+            glVertex3f(x1, h10, z0);
+            glVertex3f(x1, h11, z1);
+            glVertex3f(x0, h01, z1);
+        }
+    }
+    glEnd();
+
+    // 5. Przywracamy domyslny tryb wypelniania (GL_FILL), 
+    // zeby okienka ImGui oraz mikrofon nie zamienily sie w same linie
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
 void RenderCollisionObject(shared_ptr<Wave> wave, shared_ptr<CollisionObject> osptr)
 {
     if(auto cb = dynamic_cast<CollisionBox*>(osptr.get()))

@@ -638,7 +638,6 @@ int main()
         glMatrixMode(GL_MODELVIEW);
         glLoadMatrixf(&view[0][0]);
 
-
         if (first && !rewind_punkt)
         {
             // glfwSetTime(0.0);  // wyzeruj stoper
@@ -720,6 +719,7 @@ int main()
         //  RenderWave(current_wave, cameraPos, gWaveGL, Cube);
 
         RenderPool(cameraPos, tank.dims);
+        RenderTankBottom(tank);
 
         //for(auto o : current_wave->objects)
         //{
