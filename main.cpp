@@ -1,6 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "hmain.hpp"
-#include "CollisionObjects/CollisionHeightmap.hpp"
 
 #define M_PI 3.1415
 using std::shared_ptr;
@@ -122,26 +121,36 @@ static inline char detect_sep(const std::string &line)
     return (line.find(';') != std::string::npos) ? ';' : ',';
 }
 
-bool writeMicCsv(const std::string &path = write_file)
+bool writeMicCsv(const std::string& path = write_file)
 {
     if (Mic.gMicEvents.empty())
+    {
+        std::cout << "[CSV BLAD] Brak zarejestrowanych probek na mikrofonie (Mic.gMicEvents jest puste)!\n";
         return false;
+    }
+
+    // Automatycznie utworz folder "output", jesli jeszcze nie istnieje na dysku
+    std::filesystem::path p(path);
+    if (p.has_parent_path())
+    {
+        std::filesystem::create_directories(p.parent_path());
+    }
 
     float t_end = Mic.gMicEvents.back().t;
     for (float t = 0; t <= t_end; t += inv_fp)
     {
-        Mic.gMicEvents.push_back({q5_inter(current_wave->inv_fp, t), 0});
+        Mic.gMicEvents.push_back({ q5_inter(current_wave->inv_fp, t), 0 });
     }
 
     // posortuj po czasie
     std::sort(Mic.gMicEvents.begin(), Mic.gMicEvents.end(),
-              [](const MicSample &a, const MicSample &b)
-              { return a.t < b.t; });
+        [](const MicSample& a, const MicSample& b)
+        { return a.t < b.t; });
 
-    // scal duplikaty czas�w (dok�adnie r�wne) przez sumowanie warto�ci
+    // scal duplikaty czasow (dokladnie rowne) przez sumowanie wartosci
     std::vector<MicSample> merged;
     merged.reserve(Mic.gMicEvents.size());
-    for (const auto &s : Mic.gMicEvents)
+    for (const auto& s : Mic.gMicEvents)
     {
         if (!merged.empty() && merged.back().t == s.t)
         {
@@ -151,26 +160,32 @@ bool writeMicCsv(const std::string &path = write_file)
         {
             merged.push_back(s);
         }
-        // merged.push_back(s);
     }
 
     // zapisz do csv
     std::ofstream f(path, std::ios::out | std::ios::trunc);
     if (!f)
+    {
+        std::cout << "[CSV BLAD] Nie udalo sie otworzyc pliku do zapisu: " << path << "\n";
         return false;
+    }
 
     f.setf(std::ios::fixed);
     f << "time,value\n";
     f << std::setprecision(9);
-    for (const auto &s : merged)
+    for (const auto& s : merged)
     {
         f << s.t << ",";
         f << std::setprecision(9) << s.value << "\n";
-        f << std::setprecision(9); // wr�� do prec dla czasu
+        f << std::setprecision(9);
     }
+    f.close();
+
+    std::cout << "\n[CSV SUKCES] Zapisano " << merged.size()
+        << " probek do pliku:\n  -> " << std::filesystem::absolute(p).string() << "\n\n";
+
     return true;
 }
-
 // odczytywanie z csv czas - wartosc
 bool loadCsvSimple(const std::string &path,
                    char sep = ',', // separator
@@ -425,10 +440,12 @@ void StepSimulation(shared_ptr<Wave> wave)
         Mic.gPrevTaken.assign(Mic.gPrevHits.size(), 0); // reset znacznik�w
 
         time_T2.clear();
-        if (!beginNextWindow() or current_wave->gWinIdx == windows_number)
+        if (current_wave->gWinIdx >= windows_number - 1 || !beginNextWindow())
         {
             writeMicCsv(write_file);
             Mic.resetMicEvents();
+            simulate = false;
+            std::cout << "\n>>> SYMULACJA ZAKONCZONA (ZAPISANO 10 OKIEN DO CSV) <<<\n\n";
         }
         // rewind_punkt = false;
     }
@@ -583,8 +600,9 @@ int main()
     auto cb = make_shared<CollisionBox>(vec3f{-1, 0, 0}, vec3f{1, 1, 1}, vec3f{2.5, 1, 1});
     //current_wave->AddCollisionObject(cb);
 
-    CollisionHeightmap test_dno(41, 31, 0.5f, Cube.width, Cube.depth);
-    test_dno.printStats();
+    auto dno = make_shared<CollisionHeightmap>(41, 31, 0.5f, Cube.width, Cube.depth);
+    dno->printStats();
+    current_wave->AddCollisionObject(dno);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -692,10 +710,10 @@ int main()
 
         RenderPool(cameraPos, Cube);
 
-        for(auto o : current_wave->objects)
-        {
-            RenderCollisionObject(current_wave, o);
-        }
+        //for(auto o : current_wave->objects)
+        //{
+          //  RenderCollisionObject(current_wave, o);
+        //}
 
         updatePositionsFor(Mic.verts, gMicGL);
         RenderMicrophone(Mic, gMicGL);

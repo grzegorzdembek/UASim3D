@@ -31,6 +31,7 @@ using Red::vec3i;
 
 #include "CollisionObjects/CollisionObject.hpp"
 #include "CollisionObjects/CollisionBox.hpp"
+#include "CollisionObjects/CollisionHeightmap.hpp"
 
 #include "UASimConstants.hpp"
 

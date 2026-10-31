@@ -1,5 +1,4 @@
 #pragma once
-#include "CollisionObject.hpp"
 #include "CollisionMaterials/CollisionNullMaterial.hpp"
 #include <vector>
 #include <cmath>
@@ -77,6 +76,55 @@ public:
     virtual void RayCollisionInternal(float delta, float time, ray& r, ray_collision& rc) override
     {
         rc.has_collided = false;
+
+        vec3f p0 = r.position;
+        vec3f p1 = p0 + r.velocity * delta;
+
+        float h0 = getInterpolatedHeight(p0.x, p0.z);
+        float h1 = getInterpolatedHeight(p1.x, p1.z);
+
+        float gap0 = p0.y - h0;
+        float gap1 = p1.y - h1;
+
+        // Warunek kolizji: w tym kroku promień przeciął powierzchnię dna od góry
+        if (gap0 >= 0.0f && gap1 < 0.0f)
+        {
+            float denom = gap0 - gap1;
+            float fraction = (std::fabs(denom) > 1e-9f) ? (gap0 / denom) : 0.0f;
+            fraction = std::clamp(fraction, 0.0f, 1.0f);
+
+            // Dokładny punkt uderzenia na powierzchni
+            vec3f hit_point = p0 + r.velocity * (delta * fraction);
+            vec3f n = getInterpolatedNormal(hit_point.x, hit_point.z);
+
+            float dot_vn = vec3f::dot(r.velocity, n);
+            // Odbijamy tylko wtedy, gdy promień leci w stronę dna (zbliża się do powierzchni)
+            if (dot_vn < 0.0f)
+            {
+                // Twój wzór wektorowy: v_odbite = v - 2*(v·n)*n
+                vec3f v_refl = r.velocity - n * (2.0f * dot_vn);
+
+                rc.collision_point = hit_point;
+                rc.collision_normal = n;
+                rc.exit_vector = v_refl;
+                // Lekkie odsunięcie (+0.001m) wzdłuż normalnej zapobiega uwięzieniu promienia wewnątrz siatki
+                rc.exit_position = hit_point + n * 0.001f;
+                rc.surface = 0;
+                rc.has_delay = false;
+                rc.has_collided = true;
+
+                // Tłumienie energii fali przy odbiciu od dna (50%)
+                r.energy *= 0.5f;
+
+                static int licznik_odbic = 0;
+                if (licznik_odbic < 5)
+                {
+                    printf("[HEIGHTMAP ODBICIE] t=%.6f s | hit=(%.3f, %.3f, %.3f) | n=(%.3f, %.3f, %.3f) | vel_po=(%.1f, %.1f, %.1f)\n",
+                        time, hit_point.x, hit_point.y, hit_point.z, n.x, n.y, n.z, v_refl.x, v_refl.y, v_refl.z);
+                    licznik_odbic++;
+                }
+            }
+        }
     }
 
     float getInterpolatedHeight(float x, float z) const
