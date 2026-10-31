@@ -54,11 +54,7 @@ bool first = true;
 
 std::vector<float> winMean; // �rednie z okien X ms
 
-Cuboid_dimensions Cube
-{
-    20.0f, 6.0f, 15.0f, // width, height, depth
-    0.0f, 0.0f, 0.0f    // x/y/z offset
-};
+WaterTank tank(20.0f, 6.0f, 15.0f, WaterTank::BOTTOM_TEST);
 
 Cuboid_dimensions Obstacle
 {
@@ -327,7 +323,7 @@ void calculateFPS()
         previousTime = currentTime;
         // for (auto& wave : waves)
         //     printOversizedTriangles(wave, 0.05f);
-        printOversizedTriangles(current_wave, Cube, 0.05f);
+        printOversizedTriangles(current_wave, tank.dims, 0.05f);
     }
 } // pokaz ile fps ma program
 
@@ -449,7 +445,7 @@ void StepSimulation(shared_ptr<Wave> wave)
         }
         // rewind_punkt = false;
     }
-    updatePhysics(dt, window_ms, time_passed, wave, source, Mic, Cube, Obstacle);
+    updatePhysics(dt, window_ms, time_passed, wave, source, Mic, tank, Obstacle);
 }
 
 void DrawGUI()
@@ -486,13 +482,28 @@ void DrawGUI()
     ImGui::InputFloat("Src_vel x", &source.velocity.x, 5.0f, source.velocity.x);
     ImGui::InputFloat("Src_vel y", &source.velocity.y, 5.0f, source.velocity.y);
     ImGui::InputFloat("Src_vel z", &source.velocity.z, 5.0f, source.velocity.z);
-    ImGui::Text("Basen");
-    ImGui::InputFloat("Cube width", &Cube.width, 2.0f, Cube.width);
-    ImGui::InputFloat("Cube height", &Cube.height, 2.0f, Cube.height);
-    ImGui::InputFloat("Cube depth", &Cube.depth, 2.0f, Cube.depth);
-    ImGui::InputFloat("Cube x_offset", &Cube.x_offset, 2.0f, Cube.x_offset);
-    ImGui::InputFloat("Cube y_offset", &Cube.y_offset, 2.0f, Cube.y_offset);
-    ImGui::InputFloat("Cube z_offset", &Cube.z_offset, 2.0f, Cube.z_offset);
+
+    ImGui::Text("Zbiornik wodny");
+    const char* bottom_items[] = {
+        "0: Bazowe",
+        "1: Testowe pofalowane dno",
+        "2: Wlasne dane (wkrotce)"
+    };
+    if (ImGui::Combo("Typ dna", &tank.bottomMode, bottom_items, IM_ARRAYSIZE(bottom_items)))
+    {
+        // Po zmianie typu dna w GUI przebudowujemy granice zbiornika
+        tank.RebuildBoundaries();
+    }
+
+    if (ImGui::InputFloat("Cube width", &tank.dims.width, 2.0f, tank.dims.width) ||
+        ImGui::InputFloat("Cube height", &tank.dims.height, 2.0f, tank.dims.height) ||
+        ImGui::InputFloat("Cube depth", &tank.dims.depth, 2.0f, tank.dims.depth) ||
+        ImGui::InputFloat("Cube x_offset", &tank.dims.x_offset, 2.0f, tank.dims.x_offset) ||
+        ImGui::InputFloat("Cube y_offset", &tank.dims.y_offset, 2.0f, tank.dims.y_offset) ||
+        ImGui::InputFloat("Cube z_offset", &tank.dims.z_offset, 2.0f, tank.dims.z_offset))
+    {
+        tank.RebuildBoundaries();
+    }
     ImGui::End();
 
     auto avg = [](double* buf, int len)
@@ -597,12 +608,12 @@ int main()
 
     current_wave = make_shared<Wave>(inv_fp, dt, windows_number, gWinPackets);
 
-    auto cb = make_shared<CollisionBox>(vec3f{-1, 0, 0}, vec3f{1, 1, 1}, vec3f{2.5, 1, 1});
-    //current_wave->AddCollisionObject(cb);
+    // auto cb = make_shared<CollisionBox>(vec3f{-1, 0, 0}, vec3f{1, 1, 1}, vec3f{2.5, 1, 1});
+    // current_wave->AddCollisionObject(cb);
 
-    auto dno = make_shared<CollisionHeightmap>(41, 31, 0.5f, Cube.width, Cube.depth);
-    dno->printStats();
-    current_wave->AddCollisionObject(dno);
+    // auto dno = make_shared<CollisionHeightmap>(41, 31, 0.5f, tank.dims.width, tank.dims.depth);
+    // dno->printStats();
+    // current_wave->AddCollisionObject(dno);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -708,7 +719,7 @@ int main()
         //if(simulate || time_passed > 0.0001f)
         //  RenderWave(current_wave, cameraPos, gWaveGL, Cube);
 
-        RenderPool(cameraPos, Cube);
+        RenderPool(cameraPos, tank.dims);
 
         //for(auto o : current_wave->objects)
         //{

@@ -291,22 +291,10 @@ inline int bounce1D(float &pos, float &vel, float minb, float maxb)
     return 0;
 };
 
-inline void updatePhysics(float dt, float window_ms, float time_passed, shared_ptr<Wave> wave, SoundSource& source, Microphone& Mic, 
-    struct Cuboid_dimensions Pool, struct Cuboid_dimensions temp_Obstacle) // glowna petla fizyki programu
+inline void updatePhysics(float dt, float window_ms, float time_passed, shared_ptr<Wave> wave, SoundSource& source, Microphone& Mic,
+    WaterTank& tank, struct Cuboid_dimensions temp_Obstacle) // glowna petla fizyki programu
 {
-    const float Pool_halfW = 0.5f * Pool.width;
-    const float Pool_halfH = 0.5f * Pool.height;
-    const float Pool_halfD = 0.5f * Pool.depth;
-
-    const float e = 0.8;      // wsp. spr�ysto�ci
-    const float eps = 0.001f; // minimalne odsuni�cie od �ciany
-
-    const float micR = Mic.radius;
-    // Pomocnik do odbicia
-
-
-
-    // odbicie mikrofonu
+    // 1. Przesuniecie mikrofonu i zrodla dzwieku w kroku czasowym dt
     Mic.mic_x += Mic.mic_velocity.x * dt;
     Mic.mic_y += Mic.mic_velocity.y * dt;
     Mic.mic_z += Mic.mic_velocity.z * dt;
@@ -315,111 +303,24 @@ inline void updatePhysics(float dt, float window_ms, float time_passed, shared_p
     source.src_y += source.velocity.y * dt;
     source.src_z += source.velocity.z * dt;
 
-    // Odbicia mikrofonu od �cian basenu
-    bounce1D(Mic.mic_x, Mic.mic_velocity.x, -Pool_halfW + Pool.x_offset + micR, Pool_halfW + Pool.x_offset - micR);
-    bounce1D(Mic.mic_y, Mic.mic_velocity.y, -Pool_halfH + Pool.y_offset + micR, Pool_halfH + Pool.y_offset - micR);
-    bounce1D(Mic.mic_z, Mic.mic_velocity.z, -Pool_halfD + Pool.z_offset + micR, Pool_halfD + Pool.z_offset - micR);
+    // 2. Utrzymanie mikrofonu i zrodla wewnatrz granic zbiornika (WaterTank)
+    tank.ConstrainRigidBodies(source, Mic);
 
-    // odbicia zrodla od scian
-    bounce1D(source.src_x, source.velocity.x, -Pool_halfW + Pool.x_offset, Pool_halfW + Pool.x_offset);
-    bounce1D(source.src_y, source.velocity.y, -Pool_halfH + Pool.y_offset, Pool_halfH + Pool.y_offset);
-    bounce1D(source.src_z, source.velocity.z, -Pool_halfD + Pool.z_offset, Pool_halfD + Pool.z_offset);
+    // 3. Kolizje ciagle (CCD) promieni z pofalowanymi granicami zbiornika (np. CollisionHeightmap)
+    tank.ProcessRayCollisionsCCD(dt, time_passed, wave->nodes);
 
-    for(int i = 0; i < wave->objects.size(); i++)
-    {
-        wave->objects[i]->GetAABB(wave->aabbs[i]);
-    }
-    for(auto& r : wave->nodes)
-    {
-        ray_collision rc;
-        for(int i = 0; i < wave->aabbs.size(); i++)
-        {
-            const auto& o = wave->objects[i];
-            const auto& aabb = wave->aabbs[i];
-            bool inside_aabb = true;
-            for(int ii = 0; ii < 3; ii++)
-            {
-                inside_aabb = r.position[ii] >= aabb[ii] && r.position[ii] <= aabb[ii + 3];
-                if(!inside_aabb)
-                    break;
-            }
-            
-            if(inside_aabb)
-            {
-                o->RayCollision(dt, time_passed, r, rc);
-                if(rc.has_collided)
-                {
-                    r.position = rc.exit_position;
-                    r.velocity = rc.exit_vector;
-                    r.bounces++;
-                    // TODO: calculate doppler effect
-                    break;
-                }
-            }
-        }
-    }
-
-    // odbicia fali od scian
+    // 4. Ruch promieni, odbicia od plaskich granic zbiornika oraz detekcja trafienia w mikrofon
     for (int i = 0; i < (int)wave->nodes.size(); ++i)
     {
-        auto &p = wave->nodes[i].position;
-        auto &v = wave->nodes[i].velocity;
-        auto &energy = wave->nodes[i].energy;
+        auto& p = wave->nodes[i].position;
+        auto& v = wave->nodes[i].velocity;
 
-        // nowe pozycje
+        // Nowa pozycja promienia
         p += v * dt;
 
-        // Odbicia w XYZ
-        // --- w p�tli po node'ach ---
-        bool bouncedAny = false;
+        // Odbicia od plaskich scian, lustra wody oraz plaskiego dna
+        tank.ProcessFlatBoundaryForRay(time_passed, i, wave->nodes[i]);
 
-        // --- Odbicie X: t�umienie 0.5 ---
-        int sideX = bounce1D(p.x, v.x,
-                             -Pool_halfW + Pool.x_offset,
-                             Pool_halfW + Pool.x_offset);
-        if (sideX != 0)
-        {
-            bouncedAny = true;
-            energy *= 0.5f;
-        }
-
-        // --- Odbicie Y: d� 0.5, G�RA 0.3 ---
-        int sideY = bounce1D(p.y, v.y,
-                             -Pool_halfH + Pool.y_offset,
-                             Pool_halfH + Pool.y_offset);
-        if (sideY != 0)
-        {
-            bouncedAny = true;
-
-            if (sideY > 0)
-            {
-                // g�rna �ciana basenu (y = maxb)
-                energy *= 0.3f;
-            }
-            else
-            {
-                // dolna �ciana
-                energy *= 0.5f;
-
-                static int licznik_dna = 0;
-                if (licznik_dna < 5)
-                {
-                    printf("[DNO] t=%.6f s | node=%d | pos=(%.3f, %.3f, %.3f) | vel_po=(%.1f, %.1f, %.1f)\n",
-                        time_passed, i, p.x, p.y, p.z, v.x, v.y, v.z);
-                    licznik_dna++;
-                }
-            }
-        }
-
-        // --- Odbicie Z: t�umienie 0.5 ---
-        int sideZ = bounce1D(p.z, v.z,
-                             -Pool_halfD + Pool.z_offset,
-                             Pool_halfD + Pool.z_offset);
-        if (sideZ != 0)
-        {
-            bouncedAny = true;
-            energy *= 0.5f;
-        }
         bool hitMic = false;
         hitMic = touchesMicrophonePoint(dt, Mic, wave, (int)i);
         //vec3f buf = wave->nodes[i].position - vec3f(Mic.mic_x, Mic.mic_y, Mic.mic_z);
@@ -432,16 +333,16 @@ inline void updatePhysics(float dt, float window_ms, float time_passed, shared_p
                 E = p / (r);
 
             float win_s = window_ms / 1000.0f - (wave->gWinPackets[wave->gWinIdx].times[1] - wave->gWinPackets[wave->gWinIdx].times[0]); // 0.005s w teorii w praktyce lekko mniej niz 0.005s zeby nie brac dwa razy tej samej probki
-            float T = wave->gWinPackets[wave->gWinIdx].tEmit + time_passed;                                                  // czas przyjscia pocz�tku okna
+            float T = wave->gWinPackets[wave->gWinIdx].tEmit + time_passed;                                                  // czas przyjscia poczatku okna
             const int wid = wave->gWinIdx;
-            // Je�eli ten node jest czasowo st�umiony nie loguj do CSV
+            // Jezeli ten node jest czasowo stlumiony nie loguj do CSV
             if (T <= wave->nodes[i].suppressUntilT)
             {
                 continue;
             }
 
             ktore_odbicie++;
-            // DOPPLER (rozci�gni�cie/�ci�ni�cie osi czasu okna)
+            // DOPPLER (rozciagniecie/scisniecie osi czasu okna)
             const vec3f n_hat = vec3f::normalized(wave->nodes[i].velocity);
             const float v_mic_proj = vec3f::dot(Mic.mic_velocity, n_hat);
             float vel_test = vec3f::length(wave->nodes[i].velocity);
@@ -449,14 +350,14 @@ inline void updatePhysics(float dt, float window_ms, float time_passed, shared_p
             if (r > 1)
                 wave->nodes[i].energy = p / (r);
             EchoHit curHit;
-            curHit.T = T; //  T z bie��cej ramki
+            curHit.T = T; // T z biezacej ramki
             curHit.energy = std::fabs(wave->nodes[i].energy);
             curHit.bounces = wave->nodes[i].bounces;
             curHit.doppler = wave->nodes[i].doppler;
             curHit.dir_in = wave->nodes[i].velocity.normalized();
             int test = -1;
 
-            vec3f micC {Mic.mic_x, Mic.mic_y, Mic.mic_z};
+            vec3f micC{ Mic.mic_x, Mic.mic_y, Mic.mic_z };
 
             // Proba dopasowania okna do poprzedniego echa
             if (wave->gWinIdx != 0 && !Mic.gPrevHits.empty())
@@ -467,7 +368,7 @@ inline void updatePhysics(float dt, float window_ms, float time_passed, shared_p
                 if (match >= 0)
                 {
                     // start tego okna jest koncem poprzedniego
-                    //   przeskaluj ca�y bufor poprzedniego okna: stare T2_prev -> nowe T
+                    // przeskaluj caly bufor poprzedniego okna: stare T2_prev -> nowe T
                     if (match < (int)Mic.wektorPrev.size() && !Mic.wektorPrev[match].empty())
                     {
                         retime_echo(wave, Mic.wektorPrev[match], /*newEnd=*/T, Mic.gPrevHits[match].energy, wave->nodes[i].energy);
@@ -486,15 +387,15 @@ inline void updatePhysics(float dt, float window_ms, float time_passed, shared_p
             if (scale <= 0.0f)
                 scale = 1e-4f;
 
-            // Logowanie pe�nego okna 5 ms (czas + warto�ci)
+            // Logowanie pelnego okna 5 ms (czas + wartosci)
             if (wid >= 0 && wid < (int)wave->gWinPackets.size())
             {
-                const auto &wp = wave->gWinPackets[wid];
+                const auto& wp = wave->gWinPackets[wid];
                 const float Awin = (wp.amplitude != 0.0f) ? wp.amplitude : 1e-12f;
-                // --- sta�e do amplitudy
+                // --- stale do amplitudy
                 const float scaleAmp = std::fabs(wave->nodes[i].energy / Awin);
 
-                // BUFOR: (t_abs, val) dla wszystkich pr�bek okna
+                // BUFOR: (t_abs, val) dla wszystkich probek okna
                 std::vector<std::pair<float, float>> tmp;
                 tmp.reserve(wp.times.size());
 
@@ -512,9 +413,9 @@ inline void updatePhysics(float dt, float window_ms, float time_passed, shared_p
                 Mic.wektor.push_back(tmp);
                 Mic.wektorCurr.push_back(tmp);
 
-                // posortuj po czasie (powinno ju� by� rosn�co przy scale>0)
-                std::sort(tmp.begin(), tmp.end(), [](const auto &a, const auto &b)
-                        { return a.first < b.first; });
+                // posortuj po czasie (powinno juz byc rosnaco przy scale>0)
+                std::sort(tmp.begin(), tmp.end(), [](const auto& a, const auto& b)
+                    { return a.first < b.first; });
 
                 // INTERPOLACJA do kroku tego okna
                 if (wave->gWinIdx == wave->windows_number - 1)
@@ -523,22 +424,22 @@ inline void updatePhysics(float dt, float window_ms, float time_passed, shared_p
                 }
             }
 
-            // O�LEPIANIE WY��CZNIE TEGO SAMEGO CZO�A - zeby nie odczytac 2 razy tego samego
-            // Wersja sta�a:
+            // OSLEPIANIE WYLACZNIE TEGO SAMEGO CZOLA - zeby nie odczytac 2 razy tego samego
+            // Wersja stala:
             float blind_until = T + 0.00005f;
 
-            // parametry filtr�w klastra
+            // parametry filtrow klastra
             vec3f center = wave->nodes[i].position; // pozycja trafionego noda
 
-            float cosMax = std::cos(glm::radians(20.0f));          // max r�nica kierunku
-            float s_i = vec3f::dot(micC - wave->nodes[i].position, n_hat); // proxy czasu doj�cia
+            float cosMax = std::cos(glm::radians(20.0f));          // max roznica kierunku
+            float s_i = vec3f::dot(micC - wave->nodes[i].position, n_hat); // proxy czasu dojscia
 
             for (size_t j = 0; j < wave->nodes.size(); ++j)
             {
                 if (j == i)
                     continue;
 
-                // To samo okno emisji (to samo czo�o czasowo)
+                // To samo okno emisji (to samo czolo czasowo)
                 if (wave->gWinIdx != wid)
                     continue;
 
@@ -547,19 +448,19 @@ inline void updatePhysics(float dt, float window_ms, float time_passed, shared_p
                 if (vec3f::dot(n_hat, nj_hat) < cosMax)
                     continue;
 
-                // Node musi zbli�a� si� do mikrofonu
+                // Node musi zblizac sie do mikrofonu
                 const float s_j = vec3f::dot(micC - wave->nodes[j].position, nj_hat);
                 // if (s_j <= 0.0f) continue;
 
-                // Zbli�ony przewidywany czas doj�cia
+                // Zblizony przewidywany czas dojscia
                 if (std::fabs(s_j - s_i) > 1.5f * wave->gBlindRadius)
                     continue;
 
-                // Blisko w przestrzeni (ok. �3 tr�jk�ty�)
+                // Blisko w przestrzeni (ok. "3 trojkaty")
                 if (vec3f::length(wave->nodes[j].position - center) > wave->gBlindRadius)
                     continue;
 
-                
+
                 wave->nodes[j].suppressUntilT = std::max(wave->nodes[j].suppressUntilT, blind_until);
             }
 

@@ -126,6 +126,9 @@
     <ClInclude Include="CollisionHeightmap.hpp">
       <Filter>UASimLib\CollisionObjects</Filter>
     </ClInclude>
+    <ClInclude Include="WaterTank.hpp">
+      <Filter>UASimLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

@@ -178,6 +178,7 @@ opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="UASimLib\UASimConstants.hpp" />
     <ClInclude Include="UASimLib\UASimLib.hpp" />
     <ClInclude Include="UASimLib\wave.hpp" />
+    <ClInclude Include="WaterTank.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp" />

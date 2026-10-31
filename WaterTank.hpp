@@ -1,14 +1,11 @@
 #pragma once
 
-// =================================================================================================
-// PLIK: WaterTank.hpp
-// PRZEZNACZENIE: Klasa reprezentujaca srodowisko wodne i jego 6 granic.
-// ODPOWIEDZIALNOSC:
-//   1. Przechowywanie wymiarow geometrycznych zbiornika (Cuboid_dimensions).
-//   2. Zarzadzanie trybem dna (Plaskie / Pofalowane testowe / Wlasne dane) oraz scian bocznych.
-//   3. Obsluga kolizji ciaglej (CCD) promieni z pofalowanymi granicami (CollisionHeightmap).
-//   4. Obsluga odbic od plaskich scian oraz utrzymywanie mikrofonu i zrodla wewnatrz basenu.
-// =================================================================================================
+// WaterTank: reprezentacja srodowiska wodnego.
+// Odpowiedzialnosc:
+//  - Przechowywanie wymiarow geometrycznych zbiornika (Cuboid_dimensions).
+//  - Zarzadzanie trybem dna (plaskie / pofalowane testowe / wlasne dane) oraz scian bocznych.
+//  - Obsluga odbic promieni i ich kolizji z granicami zbiornika.
+//  - Uutrzymywanie mikrofonu i zrodla wewnatrz basenu.
 
 #include <vector>
 #include <memory>
@@ -34,31 +31,29 @@ using Red::vec3i;
 class WaterTank
 {
 public:
-    // Dostepne tryby pracy dna zbiornika (zgodne z indeksem listy rozwijanej w ImGui)
+    // Dostepne tryby pracy dna zbiornika (dostepne beda do wyboru w GUI)
     enum BottomMode : int
     {
         BOTTOM_FLAT = 0,       // Plaskie dno na glebokosci -height/2 (bazowe zachowanie symulatora)
-        BOTTOM_TEST_WAVE = 1,  // Testowe pofalowane dno (funkcja sin/cos z CollisionHeightmap)
+        BOTTOM_TEST = 1,  // Testowe pofalowane dno (funkcja sin/cos)
         BOTTOM_CUSTOM = 2      // Wlasne dane batymetryczne (miejsce na rozbudowe)
     };
 
-    // Wymiary prostopadloscianu basenu (zachowane dla pelnej kompatybilnosci z render.hpp i wave.hpp)
+    // Wymiary prostopadloscianu basenu
     Cuboid_dimensions dims;
 
-    // Aktualnie wybrany tryb dna (domyslnie 1 = Testowe pofalowane dno)
-    int bottomMode = BOTTOM_TEST_WAVE;
+    // Aktualnie wybrany tryb dna 
+    int bottomMode = BOTTOM_TEST;
 
     // Wskaznik na obiekt pofalowanego dna (nullptr, gdy wybrane jest dno plaskie)
     std::shared_ptr<CollisionHeightmap> bottomHeightmap = nullptr;
 
-    // Zbiorcza lista wszystkich aktywnych obiektow granicznych 3D (dno, a w przyszlosci sciany boczne)
+    // Lista na obiekty graniczne 
     std::vector<std::shared_ptr<CollisionObject>> boundaryObjects;
     std::vector<Red::vec<float, 6>> boundaryAABBs;
 
-    // ---------------------------------------------------------------------------------------------
-    // KONSTRUKTOR: Inicjalizuje wymiary zbiornika i buduje granice wedlug wybranego trybu
-    // ---------------------------------------------------------------------------------------------
-    WaterTank(float width = 20.0f, float height = 6.0f, float depth = 15.0f, int initialBottomMode = BOTTOM_TEST_WAVE)
+    // Inicjalizacja wymiarow zbiornika i budowa jego granic wedlug wybranego trybu
+    WaterTank(float width = 20.0f, float height = 6.0f, float depth = 15.0f, int initialBottomMode = BOTTOM_TEST)
         : bottomMode(initialBottomMode)
     {
         dims.width = width;
@@ -71,19 +66,16 @@ public:
         RebuildBoundaries();
     }
 
-    // ---------------------------------------------------------------------------------------------
-    // RebuildBoundaries: Przebudowuje obiekty kolizyjne granic zbiornika (wywolywane przy starcie
-    //                    oraz po kazdej zmianie opcji w GUI).
-    // ---------------------------------------------------------------------------------------------
+    // Przebudowuje obiekty kolizyjne granic zbiornika (wywolywane przy starcie oraz po kazdej zmianie opcji w GUI).
     void RebuildBoundaries()
     {
         boundaryObjects.clear();
         boundaryAABBs.clear();
         bottomHeightmap = nullptr;
 
-        if (bottomMode == BOTTOM_TEST_WAVE)
+        if (bottomMode == BOTTOM_TEST)
         {
-            // Tworzymy siatke pofalowanego dna 41 x 31 o kroku 0.5m dopasowana do szerokosci i glebokosci basenu
+            // Siatka pofalowanego dna 41 x 31 o kroku 0.5m dopasowana do szerokosci i glebokosci basenu
             bottomHeightmap = std::make_shared<CollisionHeightmap>(41, 31, 0.5f, dims.width, dims.depth);
             bottomHeightmap->printStats();
             RegisterBoundaryObject(bottomHeightmap);
@@ -97,17 +89,15 @@ public:
         else if (bottomMode == BOTTOM_CUSTOM)
         {
             std::cout << "\n========================================\n";
-            std::cout << " [WATER TANK] Wybrano WLASNE DANE BATYMETRYCZNE (jeszcze niezaimplementowane - uzywam plaskiego dna)\n";
+            std::cout << " [WATER TANK] Wybrano WLASNE DANE BATYMETRYCZNE (brak implementacji)\n";
             std::cout << "========================================\n\n";
         }
     }
 
-    // ---------------------------------------------------------------------------------------------
-    // Bounce1D: Pomocnicza funkcja odbicia jednowymiarowego dla plaskich granic prostopadloscianu
-    // ---------------------------------------------------------------------------------------------
+    // Funkcja odbicia jednowymiarowego dla plaskich granic prostopadloscianu
     static int Bounce1D(float& pos, float& vel, float minb, float maxb)
     {
-        const float eps = 0.001f; // Minimalne odsuniecie od sciany (1 mm)
+        const float eps = 0.001f; 
         if (pos < minb)
         {
             pos = minb + eps;
@@ -123,9 +113,7 @@ public:
         return 0;
     }
 
-    // ---------------------------------------------------------------------------------------------
-    // ConstrainRigidBodies: Utrzymuje mikrofon oraz zrodlo dzwieku wewnatrz granic basenu
-    // ---------------------------------------------------------------------------------------------
+    // Utrzymuje mikrofon oraz zrodlo dzwieku wewnatrz granic basenu
     void ConstrainRigidBodies(SoundSource& source, Microphone& Mic) const
     {
         const float halfW = 0.5f * dims.width;
@@ -144,10 +132,7 @@ public:
         Bounce1D(source.src_z, source.velocity.z, -halfD + dims.z_offset, halfD + dims.z_offset);
     }
 
-    // ---------------------------------------------------------------------------------------------
-    // ProcessRayCollisionsCCD: Sprawdza ciagla detekcje kolizji (CCD) dla wszystkich promieni
-    //                          ze wszystkimi pofalowanymi granicami zbiornika (np. dnem).
-    // ---------------------------------------------------------------------------------------------
+    // Sprawdza ciagla detekcje kolizji (CCD) dla wszystkich promieni ze wszystkimi pofalowanymi granicami zbiornika
     void ProcessRayCollisionsCCD(float dt, float time_passed, std::vector<ray>& nodes)
     {
         if (boundaryObjects.empty())
@@ -191,10 +176,7 @@ public:
         }
     }
 
-    // ---------------------------------------------------------------------------------------------
-    // ProcessFlatBoundaryForRay: Obsluguje odbicia pojedynczego promienia od plaskich scian,
-    //                            lustra wody oraz plaskiego dna (jesli brak pofalowanego dna).
-    // ---------------------------------------------------------------------------------------------
+    // Obsluguje odbicia pojedynczego promienia od plaskich scian, lustra wody oraz plaskiego dna (jesli brak pofalowanego dna).
     void ProcessFlatBoundaryForRay(float time_passed, int nodeIdx, ray& r) const
     {
         const float halfW = 0.5f * dims.width;
