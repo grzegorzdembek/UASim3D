@@ -495,12 +495,12 @@ void DrawGUI()
         tank.RebuildBoundaries();
     }
 
-    if (ImGui::InputFloat("Cube width", &tank.dims.width, 2.0f, tank.dims.width) ||
-        ImGui::InputFloat("Cube height", &tank.dims.height, 2.0f, tank.dims.height) ||
-        ImGui::InputFloat("Cube depth", &tank.dims.depth, 2.0f, tank.dims.depth) ||
-        ImGui::InputFloat("Cube x_offset", &tank.dims.x_offset, 2.0f, tank.dims.x_offset) ||
-        ImGui::InputFloat("Cube y_offset", &tank.dims.y_offset, 2.0f, tank.dims.y_offset) ||
-        ImGui::InputFloat("Cube z_offset", &tank.dims.z_offset, 2.0f, tank.dims.z_offset))
+    if (ImGui::InputFloat("Tank width", &tank.dims.width, 2.0f, tank.dims.width) ||
+        ImGui::InputFloat("Tank height", &tank.dims.height, 2.0f, tank.dims.height) ||
+        ImGui::InputFloat("Tank depth", &tank.dims.depth, 2.0f, tank.dims.depth) ||
+        ImGui::InputFloat("Tank x_offset", &tank.dims.x_offset, 2.0f, tank.dims.x_offset) ||
+        ImGui::InputFloat("Tank y_offset", &tank.dims.y_offset, 2.0f, tank.dims.y_offset) ||
+        ImGui::InputFloat("Tank z_offset", &tank.dims.z_offset, 2.0f, tank.dims.z_offset))
     {
         tank.RebuildBoundaries();
     }

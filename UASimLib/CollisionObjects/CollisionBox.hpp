@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 
 class CollisionBox : public CollisionObject
 {

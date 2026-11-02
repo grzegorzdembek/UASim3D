@@ -252,42 +252,126 @@ inline void RenderPool(glm::vec3 cameraPos, const Cuboid_dimensions& Cube )
 
 inline void RenderTankBottom(const WaterTank& tank)
 {
-    // 1. Jezeli w GUI nie wybrano pofalowanego dna nic nie rysujemy
+    // 1. Jezeli w GUI NIE wybrano pofalowanego dna lub mapa nie istnieje - nic nie rysujemy
     if (tank.bottomMode != WaterTank::BOTTOM_TEST || tank.bottomHeightmap == nullptr)
         return;
 
-    // Pobieramy wskaznik do naszego obiektu pofalowanego dna
     const auto& ch = tank.bottomHeightmap;
-
-    // 2. Wlaczamy test glebokosci 3D (zeby blizsze gorki zaslanialy dalsze)
     glEnable(GL_DEPTH_TEST);
 
-    // 3. Przestawiamy OpenGL w tryb rysowania samych krawedzi (siatki / GL_LINE) zamiast pelnych scian
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // Wyliczamy zakres wysokosci, zeby poprawnie nakladac kolory
+    const float hRange = std::max(0.001f, ch->maxH - ch->minH);
+    auto setSandColor = [&](float h) {
+        float t = (h - ch->minH) / hRange; // ulamek w przedziale [0.0, 1.0]
+        glColor3f(0.45f + 0.35f * t, 0.38f + 0.32f * t, 0.22f + 0.25f * t);
+        };
 
-    // Ustawiamy grubosc linii siatki na 1.5 piksela oraz czarny kolor (R=0, G=0, B=0)
-    glLineWidth(1.5f);
-    glColor3f(0.0f, 0.0f, 0.0f);
+    // -------------------------------------------------------------------------
+    // ETAP 1: Rysowanie gornej powierzchni dna (powloki)
+    // -------------------------------------------------------------------------
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(1.0f, 1.0f);
 
-    // 4. Rozpoczynamy rysowanie oczek siatki (kazde oczko to czworokat GL_QUADS z 4 punktow)
     glBegin(GL_QUADS);
-    for (int z = 0; z < ch->numZ - 1; ++z)
-    {
-        for (int x = 0; x < ch->numX - 1; ++x)
-        {
-            // Przeliczamy numery kolumn (x, x+1) i wierszy (z, z+1) na metry w basenie:
-            float x0 = x * ch->cellSize - ch->offsetX;
-            float x1 = (x + 1) * ch->cellSize - ch->offsetX;
-            float z0 = z * ch->cellSize - ch->offsetZ;
-            float z1 = (z + 1) * ch->cellSize - ch->offsetZ;
+    for (int z = 0; z < ch->numZ - 1; ++z) {
+        for (int x = 0; x < ch->numX - 1; ++x) {
+            // TUTAJ POPRAWKA: Uzywamy Twoich nowych zmiennych startX i startZ
+            float x0 = ch->startX + x * ch->cellSize;
+            float x1 = ch->startX + (x + 1) * ch->cellSize;
+            float z0 = ch->startZ + z * ch->cellSize;
+            float z1 = ch->startZ + (z + 1) * ch->cellSize;
 
-            // Odczytujemy wysokosci Y dla 4 naroznikow tego oczka z tablicy 1D:
-            float h00 = ch->heights[z * ch->numX + x];             // lewy-gorny
-            float h10 = ch->heights[z * ch->numX + (x + 1)];       // prawy-gorny
-            float h11 = ch->heights[(z + 1) * ch->numX + (x + 1)]; // prawy-dolny
-            float h01 = ch->heights[(z + 1) * ch->numX + x];       // lewy-dolny
+            float h00 = ch->heights[z * ch->numX + x];
+            float h10 = ch->heights[z * ch->numX + (x + 1)];
+            float h11 = ch->heights[(z + 1) * ch->numX + (x + 1)];
+            float h01 = ch->heights[(z + 1) * ch->numX + x];
 
-            // Podajemy 4 punkty 3D (x, y, z) tworzace jedno oczko siatki:
+            setSandColor(h00); glVertex3f(x0, h00, z0);
+            setSandColor(h10); glVertex3f(x1, h10, z0);
+            setSandColor(h11); glVertex3f(x1, h11, z1);
+            setSandColor(h01); glVertex3f(x0, h01, z1);
+        }
+    }
+    glEnd();
+
+    // -------------------------------------------------------------------------
+    // ETAP 2: Rysowanie objetosci - wypelnienie miedzy krawedziami fali a dnem (bottomY)
+    // -------------------------------------------------------------------------
+    // Ciemniejszy brazowy kolor dla bocznych krawedzi wykopu
+    glColor3f(0.35f, 0.28f, 0.15f);
+    glBegin(GL_QUADS);
+
+    // Tylna sciana (Z_min) - w osi Z=0
+    for (int x = 0; x < ch->numX - 1; ++x) {
+        float x0 = ch->startX + x * ch->cellSize;
+        float x1 = ch->startX + (x + 1) * ch->cellSize;
+        float h0 = ch->heights[0 * ch->numX + x];
+        float h1 = ch->heights[0 * ch->numX + (x + 1)];
+        // Tworzymy prostokat schodzacy z fali (h0, h1) pionowo w dol do dna basenu (ch->bottomY)
+        glVertex3f(x0, ch->bottomY, ch->startZ);
+        glVertex3f(x1, ch->bottomY, ch->startZ);
+        glVertex3f(x1, h1, ch->startZ);
+        glVertex3f(x0, h0, ch->startZ);
+    }
+    // Przednia sciana (Z_max)
+    for (int x = 0; x < ch->numX - 1; ++x) {
+        float x0 = ch->startX + x * ch->cellSize;
+        float x1 = ch->startX + (x + 1) * ch->cellSize;
+        float zMax = ch->startZ + (ch->numZ - 1) * ch->cellSize;
+        float h0 = ch->heights[(ch->numZ - 1) * ch->numX + x];
+        float h1 = ch->heights[(ch->numZ - 1) * ch->numX + (x + 1)];
+        glVertex3f(x1, ch->bottomY, zMax);
+        glVertex3f(x0, ch->bottomY, zMax);
+        glVertex3f(x0, h0, zMax);
+        glVertex3f(x1, h1, zMax);
+    }
+    // Lewa sciana (X_min)
+    for (int z = 0; z < ch->numZ - 1; ++z) {
+        float z0 = ch->startZ + z * ch->cellSize;
+        float z1 = ch->startZ + (z + 1) * ch->cellSize;
+        float h0 = ch->heights[z * ch->numX + 0];
+        float h1 = ch->heights[(z + 1) * ch->numX + 0];
+        glVertex3f(ch->startX, ch->bottomY, z1);
+        glVertex3f(ch->startX, ch->bottomY, z0);
+        glVertex3f(ch->startX, h0, z0);
+        glVertex3f(ch->startX, h1, z1);
+    }
+    // Prawa sciana (X_max)
+    for (int z = 0; z < ch->numZ - 1; ++z) {
+        float z0 = ch->startZ + z * ch->cellSize;
+        float z1 = ch->startZ + (z + 1) * ch->cellSize;
+        float xMax = ch->startX + (ch->numX - 1) * ch->cellSize;
+        float h0 = ch->heights[z * ch->numX + (ch->numX - 1)];
+        float h1 = ch->heights[(z + 1) * ch->numX + (ch->numX - 1)];
+        glVertex3f(xMax, ch->bottomY, z0);
+        glVertex3f(xMax, ch->bottomY, z1);
+        glVertex3f(xMax, h1, z1);
+        glVertex3f(xMax, h0, z0);
+    }
+    glEnd();
+    glDisable(GL_POLYGON_OFFSET_FILL);
+
+    // -------------------------------------------------------------------------
+    // ETAP 3: Czarna siatka krawedziowa na powierzchni
+    // -------------------------------------------------------------------------
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glLineWidth(1.5f);
+    glColor3f(0.1f, 0.1f, 0.1f);
+
+    glBegin(GL_QUADS);
+    for (int z = 0; z < ch->numZ - 1; ++z) {
+        for (int x = 0; x < ch->numX - 1; ++x) {
+            float x0 = ch->startX + x * ch->cellSize;
+            float x1 = ch->startX + (x + 1) * ch->cellSize;
+            float z0 = ch->startZ + z * ch->cellSize;
+            float z1 = ch->startZ + (z + 1) * ch->cellSize;
+
+            float h00 = ch->heights[z * ch->numX + x];
+            float h10 = ch->heights[z * ch->numX + (x + 1)];
+            float h11 = ch->heights[(z + 1) * ch->numX + (x + 1)];
+            float h01 = ch->heights[(z + 1) * ch->numX + x];
+
             glVertex3f(x0, h00, z0);
             glVertex3f(x1, h10, z0);
             glVertex3f(x1, h11, z1);
@@ -296,8 +380,6 @@ inline void RenderTankBottom(const WaterTank& tank)
     }
     glEnd();
 
-    // 5. Przywracamy domyslny tryb wypelniania (GL_FILL), 
-    // zeby okienka ImGui oraz mikrofon nie zamienily sie w same linie
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
@@ -391,7 +473,6 @@ void RenderCollisionObject(shared_ptr<Wave> wave, shared_ptr<CollisionObject> os
     }
 }
 
-
 inline void RenderWave(shared_ptr<Wave> wave, glm::vec3 cameraPos, 
     MeshGL& gWaveGL, const Cuboid_dimensions& Cube)
 {
@@ -405,7 +486,6 @@ inline void RenderWave(shared_ptr<Wave> wave, glm::vec3 cameraPos,
         wave->refineIcosahedron_chunked_mt(0.05f, budget, Cube, threads);
     }
     frameCount++;
-
 
     // odbuduj bufory tylko gdy trzeba
     if (wave->mesh_dirty)
@@ -425,5 +505,4 @@ inline void RenderWave(shared_ptr<Wave> wave, glm::vec3 cameraPos,
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_DEPTH_TEST);
     drawMesh(gWaveGL);
-
 }

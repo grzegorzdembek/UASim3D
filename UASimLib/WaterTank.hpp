@@ -1,11 +1,11 @@
-#pragma once
-
 // WaterTank: reprezentacja srodowiska wodnego.
 // Odpowiedzialnosc:
 //  - Przechowywanie wymiarow geometrycznych zbiornika (Cuboid_dimensions).
 //  - Zarzadzanie trybem dna (plaskie / pofalowane testowe / wlasne dane) oraz scian bocznych.
 //  - Obsluga odbic promieni i ich kolizji z granicami zbiornika.
 //  - Uutrzymywanie mikrofonu i zrodla wewnatrz basenu.
+
+#pragma once
 
 #include <vector>
 #include <memory>
@@ -18,13 +18,8 @@ using Red::vec3f;
 using Red::vec3i;
 
 #include "datatypes.hpp"
-#include "CollisionMaterials/CollisionMaterial.hpp"
-#include "CollisionMaterials/CollisionNullMaterial.hpp"
 #include "CollisionObjects/CollisionObject.hpp"
-#include "CollisionObjects/CollisionBox.hpp"
 #include "CollisionObjects/CollisionHeightmap.hpp"
-#include "UASimConstants.hpp"
-#include "geometry.hpp"
 #include "wave.hpp"
 #include "microphone.hpp"
 
@@ -75,8 +70,7 @@ public:
 
         if (bottomMode == BOTTOM_TEST)
         {
-            // Siatka pofalowanego dna 41 x 31 o kroku 0.5m dopasowana do szerokosci i glebokosci basenu
-            bottomHeightmap = std::make_shared<CollisionHeightmap>(41, 31, 0.5f, dims.width, dims.depth);
+            bottomHeightmap = std::make_shared<CollisionHeightmap>(dims, 0.5f);
             bottomHeightmap->printStats();
             RegisterBoundaryObject(bottomHeightmap);
         }

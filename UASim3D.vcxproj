@@ -147,7 +147,6 @@ opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CollisionHeightmap.hpp" />
     <ClInclude Include="constants.hpp" />
     <ClInclude Include="globals.hpp" />
     <ClInclude Include="hmain.hpp" />
@@ -164,6 +163,7 @@ opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="UASimLib\CollisionMaterials\CollisionMaterial.hpp" />
     <ClInclude Include="UASimLib\CollisionMaterials\CollisionNullMaterial.hpp" />
     <ClInclude Include="UASimLib\CollisionObjects\CollisionBox.hpp" />
+    <ClInclude Include="UASimLib\CollisionObjects\CollisionHeightmap.hpp" />
     <ClInclude Include="UASimLib\CollisionObjects\CollisionObject.hpp" />
     <ClInclude Include="UASimLib\datatypes.hpp" />
     <ClInclude Include="UASimLib\geometry.hpp" />
@@ -177,8 +177,8 @@ opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <ClInclude Include="UASimLib\RedCppLib\vec_comb.hpp" />
     <ClInclude Include="UASimLib\UASimConstants.hpp" />
     <ClInclude Include="UASimLib\UASimLib.hpp" />
+    <ClInclude Include="UASimLib\WaterTank.hpp" />
     <ClInclude Include="UASimLib\wave.hpp" />
-    <ClInclude Include="WaterTank.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp" />

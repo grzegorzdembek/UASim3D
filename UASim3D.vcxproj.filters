@@ -123,10 +123,10 @@
     <ClInclude Include="imgui\imgui_impl_opengl3_loader.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionHeightmap.hpp">
+    <ClInclude Include="UASimLib\CollisionObjects\CollisionHeightmap.hpp">
       <Filter>UASimLib\CollisionObjects</Filter>
     </ClInclude>
-    <ClInclude Include="WaterTank.hpp">
+    <ClInclude Include="UASimLib\WaterTank.hpp">
       <Filter>UASimLib</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,4 +1,5 @@
 #pragma once
+#include "UASimLib.hpp"
 
 // interpolacja liniowa  logMicHit na krok dt + kwantyzacja q5
 inline float flush_echo_interpolated(Microphone& Mic, shared_ptr<Wave> wave, const std::vector<std::pair<float, float>> &buf,

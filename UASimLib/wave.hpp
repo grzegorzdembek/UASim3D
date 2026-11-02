@@ -1,7 +1,6 @@
 #pragma once
 #include "UASimLib.hpp"
-
-
+#include <vector>
 
 class Wave
 {
@@ -493,7 +492,7 @@ class Wave
         aabbs.push_back(aabb);
     }
 
-    Wave(float frequency, float delta_step, int windows, vector<WindowPacket> packets)
+    Wave(float frequency, float delta_step, int windows, std::vector<WindowPacket> packets)
     {
         inv_fp = frequency;
         dt = delta_step;
