@@ -675,7 +675,7 @@ int main()
                 buildBuffersFor(source.verts, source_tri, gSrcGL, /*dynamic=*/false);
             }
 
-            // buildSphereBuffers(/*dynamic=*/true);
+            // buildSphereBuffers(/*dynamic=*/true); 
             // buildBuffersFor(current_wave->nodes, current_wave->triangles, gWaveGL, /*dynamic=*/true);
 
             // po zbudowaniu dwudziestoscianu

@@ -192,11 +192,11 @@ public:
                 // 12. Straty energii przy odbiciu od dna 
                 r.energy *= 0.5f;
 
-                // 13. Wypisanie pierwszych 5 odbic do konsoli do testu
+				// 13. Wypisanie pierwszych 5 odbic do konsoli do sprawdzenia poprawnosci obliczen
                 static int licznik_odbic = 0;
                 if (licznik_odbic < 5)
                 {
-                    printf("[HEIGHTMAP ODBICIE] t=%.6f s | hit=(%.3f, %.3f, %.3f) | n=(%.3f, %.3f, %.3f) | vel_po=(%.1f, %.1f, %.1f)\n",
+                    printf("[Odbicie] t=%.6f s | hit=(%.3f, %.3f, %.3f) | n=(%.3f, %.3f, %.3f) | vel_po=(%.1f, %.1f, %.1f)\n",
                         time, hit_point.x, hit_point.y, hit_point.z, n.x, n.y, n.z, v_refl.x, v_refl.y, v_refl.z);
                     licznik_odbic++;
                 }
@@ -280,9 +280,9 @@ public:
     void printStats() const
     {
         std::cout << "\n========================================\n";
-        std::cout << " [HEIGHTMAP TEST] Utworzono mape dna:\n";
-        std::cout << "  - Rozmiar siatki: " << numX << " x " << numZ << " (" << heights.size() << " punktow)\n";
-        std::cout << "  - Rozstaw wezlow (cellSize): " << cellSize << " m\n";
+        std::cout << " Parametry siatki:\n";
+        std::cout << "  - Rozmiar: " << numX << " x " << numZ << " (" << heights.size() << " punktow)\n";
+        std::cout << "  - Rozstaw wezlow: " << cellSize << " m\n";
         std::cout << "  - Zakres wysokosci: od " << minH << " m do " << maxH << " m\n";
         std::cout << "  - Srodek dna: h = " << heights[(numZ / 2) * numX + (numX / 2)] << " m\n";
         vec3f n_mid = normals[(numZ / 2) * numX + (numX / 2)];

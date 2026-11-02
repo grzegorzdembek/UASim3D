@@ -152,7 +152,6 @@ inline void drawCuboidTransparentSorted(glm::vec3 cameraPos, const Cuboid_dimens
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Wyłączamy zapis do bufora głębokości na czas rysowania przezroczystych ścian.
-    // Dzięki temu przednia ściana NIE ZABLOKUJE widoku piasku i mikrofonu w środku!
     glDepthMask(GL_FALSE);
 
     glBegin(GL_QUADS);
@@ -170,7 +169,7 @@ inline void drawCuboidTransparentSorted(glm::vec3 cameraPos, const Cuboid_dimens
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
 
-    // KRAWĘDZIE (drut - zostaje bez zmian)
+    // KRAWĘDZIE
     glDisable(GL_DEPTH_TEST);
     glLineWidth(2.0f);
 
