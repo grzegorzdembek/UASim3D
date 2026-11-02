@@ -147,20 +147,30 @@ inline void drawCuboidTransparentSorted(glm::vec3 cameraPos, const Cuboid_dimens
         }
     }
 
-    // transparentne sciany
+    // --- WŁĄCZAMY PRZEZROCZYSTOŚĆ DLA ŚCIAN BASENU ---
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Wyłączamy zapis do bufora głębokości na czas rysowania przezroczystych ścian.
+    // Dzięki temu przednia ściana NIE ZABLOKUJE widoku piasku i mikrofonu w środku!
+    glDepthMask(GL_FALSE);
+
     glBegin(GL_QUADS);
     for (int i = 0; i < 6; ++i)
     {
         for (int j = 0; j < 4; ++j)
         {
-            const glm::vec3 &v = vertices[faces[i].indices[j]];
+            const glm::vec3& v = vertices[faces[i].indices[j]];
             glVertex3f(v.x, v.y, v.z);
         }
     }
     glEnd();
 
-    // KRAW�DZIE (drut)
-    //  glColor4f(0.0f, 0.0f, 0.0f, 1.0f); // czarne, nieprzezroczyste
+    // Przywracamy zapis do bufora głębokości i wyłączamy blendowanie
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+
+    // KRAWĘDZIE (drut - zostaje bez zmian)
     glDisable(GL_DEPTH_TEST);
     glLineWidth(2.0f);
 
@@ -246,7 +256,7 @@ inline void RenderPool(glm::vec3 cameraPos, const Cuboid_dimensions& Cube )
      glEnable(GL_DEPTH_TEST);
     //  Basen
     // glDisable(GL_DEPTH_TEST);
-    glColor4f(0.0f, 0.0f, 1.0f, 0.1f);
+    glColor4f(0.1f, 0.4f, 0.9f, 0.08f);
     drawCuboidTransparentSorted(cameraPos, Cube);
 }
 
